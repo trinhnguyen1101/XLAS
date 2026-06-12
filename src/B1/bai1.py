@@ -20,21 +20,36 @@ def clamp_u8(value: float) -> int:
         return 255
     return rounded
 
+#Lấy giá trị màu RGB tại pixel có tọa độ x, y
+def get_rgb_pixel(image: Image.Image, x: int, y: int) -> tuple[int, int, int]:
+    pixel = image.getpixel((x, y))
 
+    if isinstance(pixel, int):
+        return pixel, pixel, pixel
+
+    if len(pixel) < 3:
+        value = int(pixel[0])
+        return value, value, value
+
+    red = int(pixel[0])
+    green = int(pixel[1])
+    blue = int(pixel[2])
+    return red, green, blue
+
+#Hàm cho yêu cầu đầu tiên, chuyển ảnh I thành ảnh xám
 def rgb_to_gray(image: Image.Image) -> Image.Image:
-    rgb_image = image.convert("RGB")
-    width, height = rgb_image.size
+    width, height = image.size
     gray_image = Image.new("L", (width, height))
 
     for y in range(height):
         for x in range(width):
-            red, green, blue = rgb_image.getpixel((x, y))
+            red, green, blue = get_rgb_pixel(image, x, y)
             gray_value = 0.299 * red + 0.587 * green + 0.114 * blue
             gray_image.putpixel((x, y), clamp_u8(gray_value))
 
     return gray_image
 
-
+#Tính histogram H1 của ảnh xám, H1[i] là số pixel có giá trị xám i (0 <= i <= 255)
 def calculate_histogram(gray_image: Image.Image) -> list[int]:
     width, height = gray_image.size
     histogram = [0 for _ in range(GRAY_LEVELS)]
@@ -46,7 +61,7 @@ def calculate_histogram(gray_image: Image.Image) -> list[int]:
 
     return histogram
 
-
+#Hàm này dùng để tạo bảng ánh xạ cho cân bằng histogram.
 def build_equalization_table(histogram: list[int], total_pixels: int) -> list[int]:
     table = [0 for _ in range(GRAY_LEVELS)]
     cumulative_count = 0
@@ -58,7 +73,7 @@ def build_equalization_table(histogram: list[int], total_pixels: int) -> list[in
 
     return table
 
-
+#áp dụng bảng ánh xạ vào ảnh xám.
 def apply_lookup_table(gray_image: Image.Image, table: list[int]) -> Image.Image:
     width, height = gray_image.size
     output_image = Image.new("L", (width, height))
@@ -70,7 +85,7 @@ def apply_lookup_table(gray_image: Image.Image, table: list[int]) -> Image.Image
 
     return output_image
 
-
+#tìm mức xám nhỏ nhất và lớn nhất trong ảnh.
 def min_max_gray(gray_image: Image.Image) -> tuple[int, int]:
     width, height = gray_image.size
     min_value = 255
@@ -86,7 +101,7 @@ def min_max_gray(gray_image: Image.Image) -> tuple[int, int]:
 
     return min_value, max_value
 
-
+#lấy ảnh sau cân bằng histogram rồi co mức xám về khoảng
 def shrink_histogram_range(
     gray_image: Image.Image,
     target_min: int = SHRINK_MIN,
@@ -112,7 +127,7 @@ def shrink_histogram_range(
 
     return output_image
 
-
+#Vẽ biểu đồ histogram và lưu vào output_path
 def draw_histogram(
     histogram: list[int],
     output_path: Path,
