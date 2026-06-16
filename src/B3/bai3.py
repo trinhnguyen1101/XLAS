@@ -2,23 +2,20 @@ from __future__ import annotations
 
 import argparse
 import math
+import sys
 from pathlib import Path
 from typing import Iterable
 
 from PIL import Image
 
+SRC_ROOT = Path(__file__).resolve().parents[1]
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
 
-Matrix = list[list[int]]
+from common.grayscale import Matrix, clamp_u8, rgb_to_gray_matrix
+
+
 GRAY_LEVELS = 256
-
-
-def clamp_u8(value: float) -> int:
-    rounded = int(value + 0.5)
-    if rounded < 0:
-        return 0
-    if rounded > 255:
-        return 255
-    return rounded
 
 
 def clamp_index(value: int, lower: int, upper: int) -> int:
@@ -27,32 +24,6 @@ def clamp_index(value: int, lower: int, upper: int) -> int:
     if value > upper:
         return upper
     return value
-
-
-def get_rgb_pixel(image: Image.Image, x: int, y: int) -> tuple[int, int, int]:
-    pixel = image.getpixel((x, y))
-
-    if isinstance(pixel, int):
-        return pixel, pixel, pixel
-
-    if len(pixel) < 3:
-        value = int(pixel[0])
-        return value, value, value
-
-    return int(pixel[0]), int(pixel[1]), int(pixel[2])
-
-
-def rgb_to_gray_matrix(image: Image.Image) -> Matrix:
-    width, height = image.size
-    gray: Matrix = [[0 for _ in range(width)] for _ in range(height)]
-
-    for y in range(height):
-        for x in range(width):
-            red, green, blue = get_rgb_pixel(image, x, y)
-            gray_value = 0.299 * red + 0.587 * green + 0.114 * blue
-            gray[y][x] = clamp_u8(gray_value)
-
-    return gray
 
 
 def matrix_height(matrix: Matrix) -> int:

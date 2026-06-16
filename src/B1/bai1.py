@@ -1,53 +1,23 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 from typing import Iterable
 
 from PIL import Image, ImageDraw
+
+SRC_ROOT = Path(__file__).resolve().parents[1]
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
+from common.grayscale import clamp_u8, rgb_to_gray
 
 
 GRAY_LEVELS = 256
 SHRINK_MIN = 30
 SHRINK_MAX = 120
 
-
-def clamp_u8(value: float) -> int:
-    rounded = int(value + 0.5)
-    if rounded < 0:
-        return 0
-    if rounded > 255:
-        return 255
-    return rounded
-
-#Lấy giá trị màu RGB tại pixel có tọa độ x, y
-def get_rgb_pixel(image: Image.Image, x: int, y: int) -> tuple[int, int, int]:
-    pixel = image.getpixel((x, y))
-
-    if isinstance(pixel, int):
-        return pixel, pixel, pixel
-
-    if len(pixel) < 3:
-        value = int(pixel[0])
-        return value, value, value
-
-    red = int(pixel[0])
-    green = int(pixel[1])
-    blue = int(pixel[2])
-    return red, green, blue
-
-#Hàm cho yêu cầu đầu tiên, chuyển ảnh I thành ảnh xám
-def rgb_to_gray(image: Image.Image) -> Image.Image:
-    width, height = image.size
-    gray_image = Image.new("L", (width, height))
-
-    for y in range(height):
-        for x in range(width):
-            red, green, blue = get_rgb_pixel(image, x, y)
-            gray_value = 0.299 * red + 0.587 * green + 0.114 * blue
-            gray_image.putpixel((x, y), clamp_u8(gray_value))
-
-    return gray_image
 
 #Tính histogram H1 của ảnh xám, H1[i] là số pixel có giá trị xám i (0 <= i <= 255)
 def calculate_histogram(gray_image: Image.Image) -> list[int]:
