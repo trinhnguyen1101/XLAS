@@ -137,8 +137,7 @@ def median_filter(matrix: Matrix, size: int = 3, padding: int = 1) -> Matrix:
     return output
 
 
-def mean_filter(matrix: Matrix, size: int = 5, padding: int = 2) -> Matrix:
-    return convolution2d(matrix, average_kernel(size), padding=padding, stride=1)
+
 
 
 def pad_to_size(matrix: Matrix, target_height: int, target_width: int, value: int = 0) -> Matrix:
@@ -206,7 +205,7 @@ def process_image(image_path: Path, output_root: Path) -> None:
     i2 = convolution2d(gray, average_kernel(5), padding=2, stride=1)
     i3 = convolution2d(gray, average_kernel(7), padding=3, stride=2)
     i4 = median_filter(i3, size=3, padding=1)
-    i5 = mean_filter(i1, size=5, padding=2)
+    i5 = median_filter(i1, size=5, padding=2)
     i6 = create_i6(i4, i5)
 
     save_matrix(gray, output_dir / "00_gray.png")
@@ -214,7 +213,7 @@ def process_image(image_path: Path, output_root: Path) -> None:
     save_matrix(i2, output_dir / "02_I2_conv_5x5_p2_s1.png")
     save_matrix(i3, output_dir / "03_I3_conv_7x7_p3_s2.png")
     save_matrix(i4, output_dir / "04_I4_median_3x3_from_I3.png")
-    save_matrix(i5, output_dir / "05_I5_mean_5x5_from_I1.png")
+    save_matrix(i5, output_dir / "05_I5_median_5x5_from_I1.png")
     save_matrix(i6, output_dir / "06_I6_threshold_I4_I5.png")
 
     print(f"Done {image_path.name} -> {output_dir}")
@@ -222,7 +221,7 @@ def process_image(image_path: Path, output_root: Path) -> None:
 
 def parse_args() -> argparse.Namespace:
     project_root = Path(__file__).resolve().parents[2]
-    parser = argparse.ArgumentParser(description="Bai 2: convolution, median filter, mean filter, threshold.")
+    parser = argparse.ArgumentParser(description="Bai 2: convolution, median filter, threshold.")
     parser.add_argument("--input-dir", type=Path, default=project_root / "input")
     parser.add_argument("--output-dir", type=Path, default=project_root / "output")
     parser.add_argument("--image", type=Path, help="Optional path to process only one image.")
