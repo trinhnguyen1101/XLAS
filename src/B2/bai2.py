@@ -4,6 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Iterable
+import numpy as np
 
 from PIL import Image
 
@@ -58,19 +59,12 @@ def pad_matrix(matrix: Matrix, padding: int, value: int = 0) -> Matrix:
 
 def average_kernel(size: int) -> Kernel:
     weight = 1.0 / (size * size)
-    return [[weight for _ in range(size)] for _ in range(size)]
+    return [[weight for _ in range(size)] for _ in range(size)] 
 
 
-def rotate_kernel_180(kernel: Kernel) -> Kernel:
-    height = len(kernel)
-    width = len(kernel[0])
-    rotated: Kernel = [[0.0 for _ in range(width)] for _ in range(height)]
 
-    for y in range(height):
-        for x in range(width):
-            rotated[y][x] = kernel[height - 1 - y][width - 1 - x]
-
-    return rotated
+def rotate_kernel_180(kernel):
+    return np.flip(kernel)
 
 
 def convolution2d(matrix: Matrix, kernel: Kernel, padding: int = 0, stride: int = 1) -> Matrix:
@@ -103,18 +97,8 @@ def convolution2d(matrix: Matrix, kernel: Kernel, padding: int = 0, stride: int 
     return output
 
 
-def insertion_sort(values: list[int]) -> list[int]:
-    sorted_values = values[:]
-
-    for i in range(1, len(sorted_values)):
-        current = sorted_values[i]
-        j = i - 1
-        while j >= 0 and sorted_values[j] > current:
-            sorted_values[j + 1] = sorted_values[j]
-            j -= 1
-        sorted_values[j + 1] = current
-
-    return sorted_values
+def sort_values(values: list[int]) -> list[int]:
+    return sorted(values)
 
 
 def median_filter(matrix: Matrix, size: int = 3, padding: int = 1) -> Matrix:
@@ -131,7 +115,7 @@ def median_filter(matrix: Matrix, size: int = 3, padding: int = 1) -> Matrix:
                 for kx in range(size):
                     neighbors.append(padded[y + ky][x + kx])
 
-            sorted_neighbors = insertion_sort(neighbors)
+            sorted_neighbors = sort_values(neighbors)
             output[y][x] = sorted_neighbors[len(sorted_neighbors) // 2]
 
     return output

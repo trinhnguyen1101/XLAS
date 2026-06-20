@@ -4,6 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Iterable
+import numpy as np
 
 from PIL import Image, ImageDraw
 
@@ -57,19 +58,8 @@ def apply_lookup_table(gray_image: Image.Image, table: list[int]) -> Image.Image
 
 #tìm mức xám nhỏ nhất và lớn nhất trong ảnh.
 def min_max_gray(gray_image: Image.Image) -> tuple[int, int]:
-    width, height = gray_image.size
-    min_value = 255
-    max_value = 0
-
-    for y in range(height):
-        for x in range(width):
-            value = gray_image.getpixel((x, y))
-            if value < min_value:
-                min_value = value
-            if value > max_value:
-                max_value = value
-
-    return min_value, max_value
+    image_array = np.array(gray_image)
+    return int(image_array.min()), int(image_array.max())
 
 #lấy ảnh sau cân bằng histogram rồi co mức xám về khoảng
 def shrink_histogram_range(
