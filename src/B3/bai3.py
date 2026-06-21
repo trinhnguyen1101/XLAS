@@ -47,7 +47,7 @@ def matrix_to_image(matrix: Matrix) -> Image.Image:
 
     return image
 
-
+#lấy pixel tại (x, y) trong ma trận, nếu vượt ra ngoài thì trả về giá trị của pixel gần nhất trong ma trận
 def get_replicate(matrix: Matrix, x: int, y: int) -> int:
     height = matrix_height(matrix)
     width = matrix_width(matrix)
@@ -55,21 +55,24 @@ def get_replicate(matrix: Matrix, x: int, y: int) -> int:
     safe_y = clamp_index(y, 0, height - 1)
     return matrix[safe_y][safe_x]
 
-
+#nội suy ra giá trị tại tọa độ (x, y) trong ma trận, sử dụng nội suy bilinear
 def bilinear_interpolate(matrix: Matrix, x: float, y: float) -> float:
+    #tìm 4 điểm bao quanh (x, y)
     x1 = math.floor(x)
     y1 = math.floor(y)
     x2 = x1 + 1
     y2 = y1 + 1
-
+    #tính kc tương đối của (x, y) so với 4 điểm đó
     a = x - x1
     b = y - y1
 
+    #lấy 4 pixel tại 4 điểm đó, nếu vượt ra ngoài ma trận thì lấy pixel gần nhất
     top_left = get_replicate(matrix, x1, y1)
     top_right = get_replicate(matrix, x2, y1)
     bottom_left = get_replicate(matrix, x1, y2)
     bottom_right = get_replicate(matrix, x2, y2)
 
+    #trả về giá trị nội suy bằng cách kết hợp 4 pixel với trọng số dựa trên khoảng cách tương đối
     return (
         (1 - a) * (1 - b) * top_left
         + a * (1 - b) * top_right
@@ -78,6 +81,7 @@ def bilinear_interpolate(matrix: Matrix, x: float, y: float) -> float:
     )
 
 
+#chuyển 8 bit trong list thành số thập phân, bắt đầu từ vị trí start
 def bits_to_decimal(bits: list[int], start: int) -> int:
     value = 0
     weight = 1
@@ -88,7 +92,7 @@ def bits_to_decimal(bits: list[int], start: int) -> int:
 
     return value
 
-
+#tìm giá trị lớn nhất trong các nhóm 8 bit liên tiếp trong list, trả về giá trị lớn nhất đó
 def largest_group_value(bits: list[int]) -> int:
     group_count = len(bits) // 8
     largest = 0
@@ -100,11 +104,12 @@ def largest_group_value(bits: list[int]) -> int:
 
     return largest
 
-
+#tính giá trị LBP cho pixel tại (center_x, center_y) trong ma trận, với số lượng neighbors và bán kính radius
 def lbp_pixel_value(matrix: Matrix, center_x: int, center_y: int, neighbors: int, radius: int) -> int:
     center_value = matrix[center_y][center_x]
     bits: list[int] = []
 
+    #duyệt các điểm trên đường tròn
     for p in range(neighbors):
         angle = 2 * math.pi * p / neighbors
         sample_x = center_x + radius * math.cos(angle)
@@ -118,7 +123,7 @@ def lbp_pixel_value(matrix: Matrix, center_x: int, center_y: int, neighbors: int
 
     return largest_group_value(bits)
 
-
+#lbp cho toàn bộ ảnh, trả về ma trận LBP có cùng kích thước với ma trận gốc
 def lbp_image(matrix: Matrix, neighbors: int, radius: int) -> Matrix:
     height = matrix_height(matrix)
     width = matrix_width(matrix)
