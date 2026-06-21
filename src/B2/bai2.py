@@ -27,65 +27,79 @@ def matrix_width(matrix: Matrix) -> int:
         return 0
     return len(matrix[0])
 
-
+#chuyển ma trận mức sáng sang ảnh
 def matrix_to_image(matrix: Matrix) -> Image.Image:
     height = matrix_height(matrix)
     width = matrix_width(matrix)
+    #tạo ảnh rỗng
     image = Image.new("L", (width, height))
 
+    #duyệt toàn bộ ma trận , ghi từng pixel vào ảnh
     for y in range(height):
         for x in range(width):
             image.putpixel((x, y), clamp_u8(matrix[y][x]))
 
     return image
 
-
+#thêm viền xung quanh ma trận với giá trị mặc định là 0
 def pad_matrix(matrix: Matrix, padding: int, value: int = 0) -> Matrix:
+    #nếu padding <= 0 thì trả về bản sao ma trận gốc
     if padding <= 0:
         return [row[:] for row in matrix]
-
+    #lấy kích thước ma trận gốc
     old_height = matrix_height(matrix)
     old_width = matrix_width(matrix)
+
+    #tính kích thước mới sau khi thêm viền
     new_height = old_height + 2 * padding
     new_width = old_width + 2 * padding
+
+    #tạo ma tran mới với giá trị mặc định là value
     padded: Matrix = [[value for _ in range(new_width)] for _ in range(new_height)]
 
+    #chép ma trận gốc vào giữa ma trận mới
     for y in range(old_height):
         for x in range(old_width):
             padded[y + padding][x + padding] = matrix[y][x]
 
     return padded
 
-
+#tạo kernel trung bình
 def average_kernel(size: int) -> Kernel:
     weight = 1.0 / (size * size)
     return [[weight for _ in range(size)] for _ in range(size)] 
 
 
-
+#xoay kernel 180 độ
 def rotate_kernel_180(kernel):
     return np.flip(kernel)
 
-
+#tính tích chập 2 chiều giữa ma trận và kernel
 def convolution2d(matrix: Matrix, kernel: Kernel, padding: int = 0, stride: int = 1) -> Matrix:
+
     input_height = matrix_height(matrix)
     input_width = matrix_width(matrix)
     kernel_height = len(kernel)
     kernel_width = len(kernel[0])
 
+    #tính kích thước output sau khi tích chập
     output_height = ((input_height + 2 * padding - kernel_height) // stride) + 1
     output_width = ((input_width + 2 * padding - kernel_width) // stride) + 1
 
+    #thêm padding vào ma trận gốc
     padded = pad_matrix(matrix, padding, 0)
     conv_kernel = rotate_kernel_180(kernel)
     output: Matrix = [[0 for _ in range(output_width)] for _ in range(output_height)]
-
+    #duyệt từng pixel
     for out_y in range(output_height):
         for out_x in range(output_width):
             total = 0.0
+
+            #xác định vị trí bắt đầu của kernel trên ma trận gốc
             start_y = out_y * stride
             start_x = out_x * stride
 
+            #nhân từng phần tử và cộng dồn
             for ky in range(kernel_height):
                 for kx in range(kernel_width):
                     pixel_value = padded[start_y + ky][start_x + kx]
@@ -100,7 +114,7 @@ def convolution2d(matrix: Matrix, kernel: Kernel, padding: int = 0, stride: int 
 def sort_values(values: list[int]) -> list[int]:
     return sorted(values)
 
-
+#lọc trung vị
 def median_filter(matrix: Matrix, size: int = 3, padding: int = 1) -> Matrix:
     input_height = matrix_height(matrix)
     input_width = matrix_width(matrix)
@@ -116,6 +130,7 @@ def median_filter(matrix: Matrix, size: int = 3, padding: int = 1) -> Matrix:
                     neighbors.append(padded[y + ky][x + kx])
 
             sorted_neighbors = sort_values(neighbors)
+            #lấy giá trị trung vị
             output[y][x] = sorted_neighbors[len(sorted_neighbors) // 2]
 
     return output
@@ -123,14 +138,14 @@ def median_filter(matrix: Matrix, size: int = 3, padding: int = 1) -> Matrix:
 
 
 
-
+#mở rộng ma trận, đồng nhất kích thước của 2 ma trận bằng cách thêm viền với giá trị 0 
 def pad_to_size(matrix: Matrix, target_height: int, target_width: int, value: int = 0) -> Matrix:
     old_height = matrix_height(matrix)
     old_width = matrix_width(matrix)
 
     if old_height > target_height or old_width > target_width:
         raise ValueError("Target size must be greater than or equal to matrix size.")
-
+    #tính khoảng cách cần thêm vào mỗi bên để căn giữa ma trận gốc trong ma trận mới
     pad_top = (target_height - old_height) // 2
     pad_left = (target_width - old_width) // 2
     padded: Matrix = [[value for _ in range(target_width)] for _ in range(target_height)]
@@ -141,7 +156,7 @@ def pad_to_size(matrix: Matrix, target_height: int, target_width: int, value: in
 
     return padded
 
-
+#đưa 2 ma trận về cùng kích thước bằng cách thêm viền với giá trị 0, trả về 2 ma trận đã được căn giữa trong ma trận mới
 def pad_to_same_size(matrix_a: Matrix, matrix_b: Matrix) -> tuple[Matrix, Matrix]:
     target_height = max(matrix_height(matrix_a), matrix_height(matrix_b))
     target_width = max(matrix_width(matrix_a), matrix_width(matrix_b))
